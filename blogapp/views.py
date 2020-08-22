@@ -1,10 +1,12 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect,JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from blogapp.models import PostBlog
 from blogapp.forms import SignUpForm,PostBlogForm
 from django.urls import reverse
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.generic import (
@@ -88,6 +90,22 @@ class PostList(ListView):
     template_name= 'blogapp/viewblog.html'
     context_object_name = 'blogs'
     ordering = ['-posted_date']
+    paginate_by = 2
+
+    def get_context_data(self, **kwargs):
+            context = super(PostList, self).get_context_data(**kwargs)
+            list_emp = PostBlog.objects.all()
+            paginator = Paginator(list_emp, self.paginate_by)
+            page = self.request.GET.get('page')
+            try:
+                file_emp = paginator.page(page)
+            except PageNotAnInteger:
+                file_emp = paginator.page(1)
+            except EmptyPage:
+                file_emp = paginator.page(paginator.num_pages)
+            context['list_emp'] = file_emp
+            return context
+
 
 
 @method_decorator(login_required, name='dispatch')
@@ -95,6 +113,7 @@ class CreateBlog(CreateView):
     model = PostBlog
     fields = '__all__'
     template_name = 'blogapp/postblog.html'
+
 
     def get_success_url(self):
         return reverse('home')
@@ -122,3 +141,9 @@ class DeleteBlog(DeleteView):
 
     def get_success_url(self):
         return reverse('home')
+
+
+def CheckUser(request):
+    users = request.GET.get('username')
+    data = {'is_exists':User.objects.filter(username__iexact = users).exists()}
+    return JsonResponse(data)

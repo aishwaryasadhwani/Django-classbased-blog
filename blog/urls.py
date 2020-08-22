@@ -35,6 +35,7 @@ urlpatterns = [
     path('update/<pk>',views.UpdateBlog.as_view()),
     path('delete/<pk>',views.DeleteBlog.as_view()),
     path('signup/',views.SignupPage),
+    path('check/',views.CheckUser)
 
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
